@@ -1,0 +1,44 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  spec-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for spec references
+        run: |
+          echo "## Spec-Driven Development Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if PR changes have corresponding specs
+          changed_services=$(git diff --name-only origin/main...HEAD -- 'src/*/Services/*.cs' | head -20)
+          if [ -n "$changed_services" ]; then
+            echo "### Changed Services" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$changed_services" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # List specs
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Feature Specs" >> $GITHUB_STEP_SUMMARY
+          for spec in specs/features/[0-9]*.md; do
+            if [ -f "$spec" ]; then
+              name=$(basename "$spec")
+              status=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$spec" || echo "Unknown")
+              echo "- **$name** — $status" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "Run \`dotnet test tests/OrderTransformer.Tests\` to verify." >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders xmlns="http://example.com/schemas/order/v1">
+    <tenantId>test-tenant</tenantId>
+    <order>
+        <header>
+            <orderId>INVALID-ID</orderId>
+            <orderDate>2024-01-15T10:30:00Z</orderDate>
+            <status>confirmed</status>
+        </header>
+        <customer>
+            <customerId></customerId>
+            <name>Bad Data Corp</name>
+            <email>not-an-email</email>
+            <address>
+                <street>789 Error Lane</street>
+                <city>Tampere</city>
+                <postalCode>33100</postalCode>
+                <country>finland</country>
+            </address>
+        </customer>
+        <items>
+            <item>
+                <lineNumber>1</lineNumber>
+                <productCode>PROD-001</productCode>
+                <description>Widget Pro</description>
+                <quantity>-5</quantity>
+                <unitPrice>29.99</unitPrice>
+                <currency>euro</currency>
+            </item>
+        </items>
+        <totals>
+            <subtotal>-149.95</subtotal>
+            <taxRate>24</taxRate>
+            <taxAmount>-35.99</taxAmount>
+            <total>-185.94</total>
+            <currency>EUR</currency>
+        </totals>
+    </order>
+</orders>

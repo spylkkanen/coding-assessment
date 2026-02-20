@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/OrderTransformer
+
+      - name: Build
+        run: dotnet build src/OrderTransformer --no-restore --warnaserrors
+
+      - name: Run tests
+        run: dotnet test tests/OrderTransformer.Tests --no-build --verbosity normal
+
+  spec-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify specs exist for changed features
+        run: |
+          echo "Checking spec coverage for changed files..."
+          # List feature specs and their status
+          for spec in specs/features/[0-9]*.md; do
+            if [ -f "$spec" ]; then
+              name=$(basename "$spec")
+              status=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$spec" || echo "Unknown")
+              echo "  $name — $status"
+            fi
+          done
+          echo "Spec check complete."

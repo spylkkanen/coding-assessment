@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/sami/git/coding-assessment status)",
+      "Bash(git -C /Users/sami/git/coding-assessment diff)",
+      "Bash(git -C /Users/sami/git/coding-assessment log --oneline -5)",
+      "Bash(git -C /Users/sami/git/coding-assessment add src/OrderTransformer/Services/OrderValidatorService.cs src/OrderTransformer/Services/FieldMappingService.cs tests/OrderTransformer.Tests/Services/OrderValidatorServiceTests.cs tests/OrderTransformer.Tests/Services/FieldMappingServiceTests.cs)"
+    ]
+  }
+}

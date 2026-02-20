@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders xmlns="http://example.com/schemas/order/v1">
+    <tenantId>test-tenant</tenantId>
+    <order>
+        <header>
+            <orderId>ORD-2024-001234</orderId>
+            <orderDate>2024-01-15T10:30:00Z</orderDate>
+            <status>confirmed</status>
+        </header>
+        <customer>
+            <customerId>CUST-5678</customerId>
+            <name>Acme Corporation</name>
+            <email>orders@acme.example.com</email>
+            <address>
+                <street>123 Business Ave</street>
+                <city>Helsinki</city>
+                <postalCode>00100</postalCode>
+                <country>FI</country>
+            </address>
+        </customer>
+        <items>
+            <item>
+                <lineNumber>1</lineNumber>
+                <productCode>PROD-001</productCode>
+                <description>Widget Pro</description>
+                <quantity>10</quantity>
+                <unitPrice>29.99</unitPrice>
+                <currency>EUR</currency>
+            </item>
+            <item>
+                <lineNumber>2</lineNumber>
+                <productCode>PROD-002</productCode>
+                <description>Gadget Standard</description>
+                <quantity>5</quantity>
+                <unitPrice>49.99</unitPrice>
+                <currency>EUR</currency>
+            </item>
+        </items>
+        <totals>
+            <subtotal>549.85</subtotal>
+            <taxRate>24</taxRate>
+            <taxAmount>131.96</taxAmount>
+            <total>681.81</total>
+            <currency>EUR</currency>
+        </totals>
+    </order>
+</orders>
