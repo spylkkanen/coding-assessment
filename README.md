@@ -1,144 +1,63 @@
-# Order Transformer
+# Order Transformer — Coding Assessment
 
 A .NET 9 Worker Service that monitors Azure Blob Storage for incoming XML order files, transforms them to JSON, and stores the output back to blob storage.
 
-## Architecture
+## Interview Plan
 
-```
-Azurite Blob Storage
-  input/  ──────────────────────────┐
-                                    │
-                         BlobPollingWorker
-                         (polls every 5s)
-                                    │
-                        TransformationPipeline
-                                    │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-              XmlParserService  OrderValidator  FieldMapping
-              (XML → Model)    Service          Service
-                    │          (validate)       (map values)
-                    │               │               │
-                    └───────────────┼───────────────┘
-                                    │
-                        JsonTransformerService
-                        (Model → JSON)
-                                    │
-  output/ ◄─────────────────────────┘
-  processed/ ◄── (input file moved here after success)
-  failed/    ◄── (input file moved here on error)
-```
+In this assessment you have tools:
+- VS Code
+- Claude Code
+- Azure Storage Explorer
+- Docker Desktop
+- Terminal
 
-## Data Flow
+### Phase 1: Read and Explain (~15 minutes)
 
-1. XML order files are placed in the `input/` folder of the blob storage container
-2. `BlobPollingWorker` detects new files every 5 seconds
-3. `XmlParserService` parses the XML into `OrderBatch` domain model
-4. `OrderValidatorService` validates all fields and collects errors
-5. `FieldMappingService` maps field values (codes → human-readable names)
-6. `JsonTransformerService` serializes the model to JSON (including any validation errors)
-7. JSON output is written to the `output/` folder
-8. Processed XML files are moved to `processed/`
+**Goal:** Candidate reads the codebase and demonstrates understanding by drawing and explaining.
 
-## Domain Model
+1. **Read the code** — Start from `Program.cs` and trace the execution flow through the application
+2. **Draw the process** — On the whiteboard, draw a diagram showing:
+   - How the application starts and what triggers processing
+   - The pipeline stages and what each service does
+   - How data flows from XML input to JSON output
+   - What happens to files after processing (success and failure paths)
+3. **Explain the architecture** — Walk through the diagram and explain:
+   - Why is each service behind an interface?
+   - Why are models defined as records with `init` setters?
+   - How does the pipeline handle validation errors — does it stop or continue?
+   - What happens if one file fails — does it affect other files?
 
-```
-OrderBatch
-├── TenantId
-└── Orders[]
-    ├── Header (OrderId, OrderDate, Status)
-    ├── Customer (CustomerId, Name, Email, Address)
-    ├── Items[] (LineNumber, ProductCode, Description, Quantity, UnitPrice, Currency)
-    └── Totals (Subtotal, TaxRate, TaxAmount, Total, Currency)
-```
+### Phase 2: Design and Implement (~30 minutes)
 
-## Project Structure
+**Goal:** Candidate receives a new feature requirement, designs the solution, then implements it.
 
-```
-src/OrderTransformer/
-├── Program.cs                          # Entry point, DI registration
-├── Models/
-│   ├── OrderModels.cs                  # Domain model records
-│   ├── ValidationError.cs             # Validation error record
-│   └── TransformationResult.cs        # Pipeline result record
-├── Services/
-│   ├── IBlobStorageService.cs         # Blob read/write/move interface
-│   ├── BlobStorageService.cs          # Azure.Storage.Blobs implementation
-│   ├── IXmlParserService.cs           # XML parsing interface
-│   ├── XmlParserService.cs            # System.Xml.Linq implementation
-│   ├── IJsonTransformerService.cs     # JSON output interface
-│   ├── JsonTransformerService.cs      # System.Text.Json implementation
-│   ├── IOrderValidatorService.cs      # Validation interface
-│   ├── OrderValidatorService.cs       # Validation implementation
-│   ├── IFieldMappingService.cs        # Field mapping interface
-│   └── FieldMappingService.cs         # Mapping implementation
-└── Worker/
-    ├── BlobPollingWorker.cs           # BackgroundService polling blob storage
-    └── TransformationPipeline.cs      # Orchestrates the processing steps
+1. **Receive the requirement** — Product Owner presents the new feature spec from `specs/features/`
+2. **Design first** — Before writing any code:
+   - Read the existing code to find where the change belongs
+   - Draw the updated validation flow on the whiteboard
+   - Explain the approach: what changes, what stays the same
+   - Discuss edge cases and testing strategy
+3. **Create the spec** — Write or update the feature spec with design decisions
+4. **Implement** — Write the code:
+   - Follow existing patterns in the codebase
+   - Use AI tools (Copilot, Claude Code, etc.) — we want to see how you work with them
+   - Run tests incrementally, not just at the end
+5. **Verify** — Build, test, and run end-to-end with Docker
 
-tests/OrderTransformer.Tests/
-├── Services/
-│   ├── XmlParserServiceTests.cs       # XML parsing tests
-│   ├── JsonTransformerServiceTests.cs # JSON output tests
-│   ├── OrderValidatorServiceTests.cs  # Validation tests
-│   └── FieldMappingServiceTests.cs    # Mapping tests
-├── Worker/
-│   └── TransformationPipelineTests.cs # Pipeline orchestration tests
-└── TestData/
-    ├── valid-order.xml                # Valid test data
-    └── invalid-order.xml              # Invalid test data
-```
-
-## Quick Start
-
-### Prerequisites
-- .NET 9 SDK
-- Docker and Docker Compose
-
-### Start Infrastructure
+### Start Services
 
 ```bash
-# Start Azurite blob storage with seed data
+# Start infrastructure
 docker compose up -d
 
-# Verify initialization completed
+# Verify seed data
 docker compose logs azurite-init
-```
 
-### Run Locally
-
-```bash
-# Build
-dotnet build src/OrderTransformer
-
-# Run (connects to Azurite on localhost:10000)
-dotnet run --project src/OrderTransformer
-```
-
-### Run Tests
-
-```bash
+# Run tests (should all pass)
 dotnet test tests/OrderTransformer.Tests
-```
 
-### Run in Docker
-
-```bash
-docker compose --profile app up --build -d
-
-# View logs
-docker compose --profile app logs order-transformer --follow
-```
-
-### Verify Output
-
-```bash
-# List output blobs
-docker compose exec azurite-init az storage blob list \
-  --container-name orders \
-  --prefix output/ \
-  --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://localhost:10000/devstoreaccount1;" \
-  --output table
+# Run the app
+dotnet run --project src/OrderTransformer
 ```
 
 ### Clean Up
@@ -146,26 +65,3 @@ docker compose exec azurite-init az storage blob list \
 ```bash
 docker compose --profile app down -v
 ```
-
-## Configuration
-
-Configuration is in `src/OrderTransformer/appsettings.json`:
-
-| Setting | Default | Description |
-|---|---|---|
-| `BlobStorage:ConnectionString` | Azurite default | Azure Blob Storage connection string |
-| `BlobStorage:ContainerName` | `orders` | Blob container name |
-| `BlobStorage:InputPrefix` | `input/` | Folder to monitor for new files |
-| `BlobStorage:OutputPrefix` | `output/` | Folder to write JSON output |
-| `BlobStorage:ProcessedPrefix` | `processed/` | Folder for successfully processed files |
-| `BlobStorage:FailedPrefix` | `failed/` | Folder for failed files |
-| `BlobStorage:PollingIntervalSeconds` | `5` | How often to check for new files |
-
-## Technology Stack
-
-- **.NET 9** Worker Service
-- **Azure.Storage.Blobs** SDK for blob operations
-- **System.Xml.Linq** for XML parsing
-- **System.Text.Json** for JSON serialization
-- **xUnit** + **Moq** for testing
-- **Docker Compose** + **Azurite** for local development
