@@ -18,7 +18,6 @@ bld/
 
 ## IDE
 .vs/
-.vscode/
 *.swp
 *.swo
 *~
